@@ -10,10 +10,6 @@ import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
 import System.IO
 
--- TODO
--- * figure out of greedyView will work for me
---   at least gnome and xmonad should be consistent
-
 main = do
     xmonad $ gnomeConfig
         { manageHook = myManageHook <+> manageHook gnomeConfig
@@ -51,7 +47,7 @@ myKeysP =
     , ("M-S-<Down>", shiftToNext >> nextWS)
     , ("M-<Left>", nextScreen)
     , ("M-<Right>", prevScreen)
-    , ("M-S-<Left>", shiftNextScreen)
-    , ("M-S-<Right>", shiftPrevScreen)
+    , ("M-S-<Left>", shiftNextScreen >> nextScreen)
+    , ("M-S-<Right>", shiftPrevScreen >> prevScreen)
     , ("M-z", toggleWS)
     ]
