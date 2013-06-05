@@ -1,0 +1,14 @@
+!! .Xmodmap
+
+! clear previous mappings
+clear lock
+clear control
+clear mod4
+
+! map keys to other keys
+keysym Caps_Lock = Control_L
+keysym Control_L = Multi_key
+
+! set control and mod4 back
+add control = Control_L
+add mod4 = Super_L Multi_key
