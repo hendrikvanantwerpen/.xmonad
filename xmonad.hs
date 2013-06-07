@@ -17,13 +17,15 @@ main = do
         , logHook = myLogHook <+> logHook gnomeConfig
         , modMask = mod4Mask
         , handleEventHook = fullscreenEventHook
+        , borderWidth = 2
         }
         `additionalKeysP` myKeysP
         `additionalKeys` myKeys
 
 myManageHook = composeAll
     [ manageDocks
-    , className =? "Thunderbird" --> doShift "9"
+    , className =? "Mail" --> doShift "9"
+    , className =? "Update-manager" --> doFloat
     , isFullscreen --> doFullFloat
     ]
 
