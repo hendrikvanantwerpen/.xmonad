@@ -5,16 +5,22 @@ import XMonad.Config.Gnome
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
+import XMonad.Layout.DwmStyle
 import XMonad.Layout.NoBorders (smartBorders)
+import XMonad.Layout.NoFrillsDecoration
+import XMonad.Hooks.SetWMName
+import XMonad.Layout.SimpleDecoration
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
 import System.IO
 
 main = do
     xmonad $ gnomeConfig
-        { manageHook = myManageHook <+> manageHook gnomeConfig
+        { startupHook = myStartupHook
+        , manageHook = myManageHook <+> manageHook gnomeConfig
         , layoutHook = myLayoutHook $ layoutHook gnomeConfig
         , logHook = myLogHook <+> logHook gnomeConfig
+        , workspaces = myWorkspaces
         , modMask = mod4Mask
         , handleEventHook = fullscreenEventHook
         , borderWidth = 2
@@ -22,16 +28,19 @@ main = do
         `additionalKeysP` myKeysP
         `additionalKeys` myKeys
 
+myStartupHook = setWMName "LG3D" -- make AWT work
+
+myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
 myManageHook = composeAll
     [ manageDocks
-    , className =? "Mail" --> doShift "9"
+    , className =? "Thunderbird" --> doShift "9"
     , className =? "Update-manager" --> doFloat
+    , className =? "Zenity" --> doFloat
     , isFullscreen --> doFullFloat
     ]
 
-myLayoutHook =
-    avoidStruts
-    . smartBorders
+myLayoutHook = avoidStruts . smartBorders
 
 myLogHook = return ()
 
@@ -52,4 +61,9 @@ myKeysP =
     , ("M-S-<Left>", shiftNextScreen >> nextScreen)
     , ("M-S-<Right>", shiftPrevScreen >> prevScreen)
     , ("M-z", toggleWS)
+    ] ++
+    [ (otherModMasks ++ "M-" ++ [key], action tag)
+      | (tag, key)  <- zip myWorkspaces "123456789"
+      , (otherModMasks, action) <- [ ("", windows . W.view)
+                                   , ("S-", windows . W.shift) ]
     ]
