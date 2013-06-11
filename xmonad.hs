@@ -5,6 +5,7 @@ import XMonad.Config.Gnome
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.Place
 import XMonad.Layout.DwmStyle
 import XMonad.Layout.NoBorders (smartBorders)
 import XMonad.Layout.NoFrillsDecoration
@@ -13,6 +14,8 @@ import XMonad.Layout.SimpleDecoration
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
 import System.IO
+
+-- Wire things into the configuration
 
 main = do
     xmonad $ gnomeConfig
@@ -28,25 +31,35 @@ main = do
         `additionalKeysP` myKeysP
         `additionalKeys` myKeys
 
+-- The custom configuration
+
 myStartupHook = setWMName "LG3D" -- make AWT work
 
 myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-myManageHook = composeAll
-    [ manageDocks
+hangoutsAppName = "crx_nckgahadagoaajjgafhacjanaoiihapd"
+hangoutsTitle = "Hangouts"
+
+myManageHook = composeAll $ reverse
+    [ idHook
+    , isFullscreen --> doFullFloat
     , className =? "Thunderbird" --> doShift "9"
     , className =? "Update-manager" --> doFloat
     , className =? "Zenity" --> doFloat
-    , isFullscreen --> doFullFloat
+    , className =? "Gimp" --> unFloat
+    , appName =? hangoutsAppName <||> appName =? "Pidgin" --> doFloat
+    , appName =? hangoutsAppName <&&> title /? "Hangouts" --> placeHook myChatPlacement
+    , appName =? "Pidgin" <&&> title /? "Pidgin" --> placeHook myChatPlacement
+    , manageDocks
     ]
+
+myChatPlacement = withGaps (32,32,32,32) (smart (1,1))
 
 myLayoutHook = avoidStruts . smartBorders
 
-myLogHook = return ()
+myLogHook = idHook
 
-myKeys =
-    [
-    ]
+myKeys = []
 
 myKeysP =
     [ ("M-S-q", spawn "gnome-session-quit --power-off")
@@ -67,3 +80,10 @@ myKeysP =
       , (otherModMasks, action) <- [ ("", windows . W.view)
                                    , ("S-", windows . W.shift) ]
     ]
+
+-- Utility functions
+
+unFloat = ask >>= doF . W.sink
+
+(/?) :: Eq a => Query a -> a -> Query Bool
+(/?) qa a = qa =? a >>= return . not
