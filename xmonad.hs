@@ -6,10 +6,10 @@ import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.Place
+import XMonad.Hooks.SetWMName
 import XMonad.Layout.DwmStyle
 import XMonad.Layout.NoBorders (smartBorders)
 import XMonad.Layout.NoFrillsDecoration
-import XMonad.Hooks.SetWMName
 import XMonad.Layout.SimpleDecoration
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
@@ -47,11 +47,14 @@ myManageHook = composeAll $ reverse
     , className =? "Update-manager" --> doFloat
     , className =? "Zenity" --> doFloat
     , className =? "Gimp" --> unFloat
-    , appName =? hangoutsAppName <||> appName =? "Pidgin" --> doFloat
-    , appName =? hangoutsAppName <&&> title /? "Hangouts" --> placeHook myChatPlacement
-    , appName =? "Pidgin" <&&> title /? "Pidgin" --> placeHook myChatPlacement
+    , matchChat --> placeHook myChatPlacement <+> doFloat
+    , matchCenter --> placeHook (smart (0.5, 0.5))
     , manageDocks
     ]
+
+matchChat = appName =? hangoutsAppName <||> appName =? "Pidgin" <||> className =? "Skype"
+
+matchCenter = appName =? "gcr-prompter"
 
 myChatPlacement = withGaps (32,32,32,32) (smart (1,1))
 
@@ -62,8 +65,10 @@ myLogHook = idHook
 myKeys = []
 
 myKeysP =
-    [ ("M-S-q", spawn "gnome-session-quit --power-off")
-    , ("M-S-x", spawn "xmodmap ~/.Xmodmap")
+    [ ("M-q", spawn "gnome-session-quit --logout")
+    , ("M-S-q", spawn "gnome-session-quit --power-off")
+    , ("M-x", spawn "xmodmap ~/.xmonad/.Xmodmap")
+    , ("M-S-x", spawn "xmodmap ~/.xmonad/.Xmodmap-home")
     , ("M-S-<Space>", swapNextScreen)
     , ("M-<Up>", prevWS)
     , ("M-<Down>", nextWS)
@@ -74,6 +79,7 @@ myKeysP =
     , ("M-S-<Left>", shiftNextScreen >> nextScreen)
     , ("M-S-<Right>", shiftPrevScreen >> prevScreen)
     , ("M-z", toggleWS)
+    , ("M-r", gnomeRun)
     ] ++
     [ (otherModMasks ++ "M-" ++ [key], action tag)
       | (tag, key)  <- zip myWorkspaces "123456789"
