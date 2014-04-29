@@ -7,54 +7,56 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.Place
 import XMonad.Hooks.SetWMName
+import XMonad.Hooks.UrgencyHook
 import XMonad.Layout.DwmStyle
 import XMonad.Layout.NoBorders (smartBorders)
 import XMonad.Layout.NoFrillsDecoration
 import XMonad.Layout.SimpleDecoration
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
+import XMonad.Util.NamedWindows
+import XMonad.Util.Run
 import System.IO
 
 -- Wire things into the configuration
 
-main = do
-    xmonad $ gnomeConfig
-        { startupHook = myStartupHook
-        , manageHook = myManageHook <+> manageHook gnomeConfig
-        , layoutHook = myLayoutHook $ layoutHook gnomeConfig
-        , logHook = myLogHook <+> logHook gnomeConfig
-        , workspaces = myWorkspaces
-        , modMask = mod4Mask
-        , handleEventHook = fullscreenEventHook
-        , borderWidth = 2
-        }
-        `additionalKeysP` myKeysP
-        `additionalKeys` myKeys
+main = xmonad
+    $ withUrgencyHook LibNotifyUrgencyHook
+    $ gnomeConfig
+    { startupHook = myStartupHook
+    , manageHook = myManageHook <+> manageHook gnomeConfig
+    , layoutHook = myLayoutHook $ layoutHook gnomeConfig
+    , logHook = myLogHook <+> logHook gnomeConfig
+    , workspaces = myWorkspaces
+    , modMask = mod4Mask
+    , handleEventHook = fullscreenEventHook
+    , borderWidth = 2
+    }
+    `additionalKeysP` myKeysP
+    `additionalKeys` myKeys
 
 -- The custom configuration
 
-myStartupHook = setWMName "LG3D" -- make AWT work
+myStartupHook = idHook
 
 myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 hangoutsAppName = "crx_nckgahadagoaajjgafhacjanaoiihapd"
-hangoutsTitle = "Hangouts"
 
 myManageHook = composeAll $ reverse
     [ idHook
     , isFullscreen --> doFullFloat
+    , isDialog --> doCenterFloat
     , className =? "Thunderbird" --> doShift "9"
-    , className =? "Update-manager" --> doFloat
-    , className =? "Zenity" --> doFloat
+    , className =? "Update-manager" --> doCenterFloat
+    , (className =? "Firefox" <&&> windowRoleIs "Preferences") --> doCenterFloat
     , className =? "Gimp" --> unFloat
+    , appName =? "gcr-prompter" --> doCenterFloat
     , matchChat --> placeHook myChatPlacement <+> doFloat
-    , matchCenter --> placeHook (smart (0.5, 0.5))
     , manageDocks
     ]
 
 matchChat = appName =? hangoutsAppName <||> appName =? "Pidgin" <||> className =? "Skype"
-
-matchCenter = appName =? "gcr-prompter"
 
 myChatPlacement = withGaps (32,32,32,32) (smart (1,1))
 
@@ -87,9 +89,22 @@ myKeysP =
                                    , ("S-", windows . W.shift) ]
     ]
 
+-- Notifications for urgent windows
+-- as per http://pbrisbin.com/posts/using_notify_osd_for_xmonad_notifications/
+
+data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
+
+instance UrgencyHook LibNotifyUrgencyHook where
+    urgencyHook LibNotifyUrgencyHook w = do
+        name     <- getName w
+        Just idx <- fmap (W.findTag w) $ gets windowset
+        safeSpawn "notify-send" [show name, "workspace " ++ idx]
+
 -- Utility functions
 
 unFloat = ask >>= doF . W.sink
+
+windowRoleIs role = stringProperty "WM_WINDOW_ROLE" =? role
 
 (/?) :: Eq a => Query a -> a -> Query Bool
 (/?) qa a = qa =? a >>= return . not
