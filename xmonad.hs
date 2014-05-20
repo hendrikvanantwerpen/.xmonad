@@ -81,7 +81,8 @@ myKeysP =
     , ("M-S-<Left>", shiftNextScreen >> nextScreen)
     , ("M-S-<Right>", shiftPrevScreen >> prevScreen)
     , ("M-z", toggleWS)
-    , ("M-r", gnomeRun)
+    , ("M-<Backspace>", focusUrgent)
+    , ("M-S-<Backspace>", clearUrgents)
     ] ++
     [ (otherModMasks ++ "M-" ++ [key], action tag)
       | (tag, key)  <- zip myWorkspaces "123456789"
