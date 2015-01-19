@@ -1,3 +1,5 @@
+import Data.List
+import System.IO
 import XMonad
 import XMonad.Actions.CycleWS
 import XMonad.Actions.PhysicalScreens
@@ -16,7 +18,6 @@ import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
 import XMonad.Util.NamedWindows
 import XMonad.Util.Run
-import System.IO
 
 -- Wire things into the configuration
 
@@ -37,7 +38,7 @@ main = xmonad
 
 -- The custom configuration
 
-myStartupHook = idHook
+myStartupHook = setWMName "LG3D"
 
 myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
@@ -49,14 +50,22 @@ myManageHook = composeAll $ reverse
     , isDialog --> doCenterFloat
     , className =? "Thunderbird" --> doShift "9"
     , className =? "Update-manager" --> doCenterFloat
-    , (className =? "Firefox" <&&> windowRoleIs "Preferences") --> doCenterFloat
+    , xulApp "Firefox" --> doCenterFloat
+    , xulApp "Zotero" --> doCenterFloat
     , className =? "Gimp" --> unFloat
     , appName =? "gcr-prompter" --> doCenterFloat
     , matchChat --> placeHook myChatPlacement <+> doFloat
     , manageDocks
     ]
 
-matchChat = appName =? hangoutsAppName <||> appName =? "Pidgin" <||> className =? "Skype"
+matchChat = appName =? hangoutsAppName
+            <||> appName =? "Pidgin"
+            <||> className =? "Skype"
+
+xulApp name = className =? name
+              <&&> (windowRole =? "Preferences"
+                    <||> windowRole =? "pref"
+                    <||> title `endsWith` "Preferences")
 
 myChatPlacement = withGaps (32,32,32,32) (smart (1,1))
 
@@ -86,7 +95,7 @@ myKeysP =
     ] ++
     [ (otherModMasks ++ "M-" ++ [key], action tag)
       | (tag, key)  <- zip myWorkspaces "123456789"
-      , (otherModMasks, action) <- [ ("", windows . W.view)
+      , (otherModMasks, action) <- [ ("", windows . W.greedyView) -- use W.view for no swapping
                                    , ("S-", windows . W.shift) ]
     ]
 
@@ -105,7 +114,10 @@ instance UrgencyHook LibNotifyUrgencyHook where
 
 unFloat = ask >>= doF . W.sink
 
-windowRoleIs role = stringProperty "WM_WINDOW_ROLE" =? role
+windowRole = stringProperty "WM_WINDOW_ROLE"
 
 (/?) :: Eq a => Query a -> a -> Query Bool
-(/?) qa a = qa =? a >>= return . not
+qa /? a = qa =? a >>= return . not
+
+endsWith :: Eq a => Query [a] -> [a] -> Query Bool
+qa `endsWith` a = qa >>= return . (isSuffixOf a)
