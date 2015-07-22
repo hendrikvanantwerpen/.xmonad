@@ -1,5 +1,0 @@
-!! .Xmodmap
-remove lock = Caps_Lock
-keysym Control_L = Multi_key
-keysym Caps_Lock = Control_L
-add control = Control_L
