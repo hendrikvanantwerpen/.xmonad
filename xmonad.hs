@@ -1,10 +1,12 @@
 import Data.List
 import Graphics.X11.ExtraTypes.XF86
+import LXDE
 import System.IO
 import XMonad
 import XMonad.Actions.CycleWS
 import XMonad.Actions.PhysicalScreens
 import XMonad.Actions.Volume
+import XMonad.Config.Desktop
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
@@ -24,7 +26,7 @@ import XMonad.Util.Run
 
 main = xmonad
     $ withUrgencyHook LibNotifyUrgencyHook
-    $ defaultConfig
+    $ lxdeConfig
     { terminal = "terminator"
     , startupHook = myStartupHook
     , manageHook = myManageHook <+> manageHook defaultConfig
@@ -82,8 +84,7 @@ myKeys =
     ]
 
 myKeysP =
-    [ ("M-q", spawn "lxsession-logout")
-    , ("M-S-<Space>", swapNextScreen)
+    [ ("M-S-<Space>", swapNextScreen)
     , ("M-<Up>", prevWS)
     , ("M-<Down>", nextWS)
     , ("M-S-<Up>", shiftToPrev >> prevWS)
