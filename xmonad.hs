@@ -1,9 +1,10 @@
 import Data.List
+import Graphics.X11.ExtraTypes.XF86
 import System.IO
 import XMonad
 import XMonad.Actions.CycleWS
 import XMonad.Actions.PhysicalScreens
-import XMonad.Config.Gnome
+import XMonad.Actions.Volume
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
@@ -23,11 +24,12 @@ import XMonad.Util.Run
 
 main = xmonad
     $ withUrgencyHook LibNotifyUrgencyHook
-    $ gnomeConfig
-    { startupHook = myStartupHook
-    , manageHook = myManageHook <+> manageHook gnomeConfig
-    , layoutHook = myLayoutHook $ layoutHook gnomeConfig
-    , logHook = myLogHook <+> logHook gnomeConfig
+    $ defaultConfig
+    { terminal = "terminator"
+    , startupHook = myStartupHook
+    , manageHook = myManageHook <+> manageHook defaultConfig
+    , layoutHook = myLayoutHook $ layoutHook defaultConfig
+    , logHook = myLogHook <+> logHook defaultConfig
     , workspaces = myWorkspaces
     , modMask = mod4Mask
     , handleEventHook = fullscreenEventHook
@@ -73,13 +75,14 @@ myLayoutHook = avoidStruts . smartBorders
 
 myLogHook = idHook
 
-myKeys = []
+myKeys =
+    [ ((0, xF86XK_AudioLowerVolume ), lowerVolume 3 >> return ())
+    , ((0, xF86XK_AudioRaiseVolume ), raiseVolume 3 >> return ())
+    , ((0, xF86XK_AudioMute        ), toggleMute    >> return ())
+    ]
 
 myKeysP =
-    [ ("M-q", spawn "gnome-session-quit --logout")
-    , ("M-S-q", spawn "gnome-session-quit --power-off")
-    , ("M-x", spawn "xmodmap ~/.xmonad/.Xmodmap")
-    , ("M-S-x", spawn "xmodmap ~/.xmonad/.Xmodmap-home")
+    [ ("M-q", spawn "lxsession-logout")
     , ("M-S-<Space>", swapNextScreen)
     , ("M-<Up>", prevWS)
     , ("M-<Down>", nextWS)
